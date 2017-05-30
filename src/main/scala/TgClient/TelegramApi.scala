@@ -48,4 +48,22 @@ class TelegramApi(config: Config)(implicit system: ActorSystem) extends StrictLo
       .flatMap(x => Unmarshal(x.entity).to[TelegramApiResponse[Boolean]])
       .map(x => x.result)
   }
+
+  def sendMessage(message: ResponseMessage): Future[Boolean] = {
+    val payload = HttpEntity.Strict(
+      contentType = ContentTypes.`application/json`,
+      data = ByteString(message.toJson.compactPrint)
+    )
+
+    val request = HttpRequest(
+      uri = getUrl("sendMessage"),
+      method = HttpMethods.POST,
+      entity = payload
+    )
+
+    Http()
+      .singleRequest(request)
+      .flatMap(x => Unmarshal(x.entity).to[TelegramApiResponse[Boolean]])
+      .map(x => x.result)
+  }
 }

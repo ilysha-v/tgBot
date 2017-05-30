@@ -17,9 +17,7 @@ class SubscriptionActor(telegramApi: TelegramApi) extends Actor with StrictLoggi
         if needToSubscribe
         _ = logger.warn("Subscription not found. Trying to subscribe")
         subscriptionResult = telegramApi.setWebHookInfo()
-      } yield subscriptionResult)
-        .onComplete {x =>
-          context.become(receive)}
+      } yield subscriptionResult).onComplete { _ => context.become(receive) }
   }
 
   def checking: Receive = {

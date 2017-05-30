@@ -16,7 +16,8 @@ case class SetWebHookPayload(
 
 case class Sender(
   first_name: String,
-  last_name: String,
+  last_name: Option[String],
+  username: Option[String],
   language_code: String
 )
 
@@ -39,4 +40,9 @@ case class ChatInfo(
 case class TelegramUpdate(
   update_id: Int,
   message: Message
+)
+
+case class ResponseMessage(
+  chat_id: Int,
+  text: String
 )

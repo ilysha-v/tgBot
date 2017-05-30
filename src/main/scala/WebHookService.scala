@@ -1,4 +1,5 @@
-import TgClient.{TelegramApi, TelegramJsonProtocol, TelegramUpdate}
+import TgBot.TelegramRejectionHandler
+import TgClient.{Message, ResponseMessage, TelegramApi, TelegramJsonProtocol, TelegramUpdate}
 import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server.{HttpApp, Route}
@@ -11,19 +12,26 @@ class WebHookService(telegramApi: TelegramApi)(implicit system: ActorSystem) ext
   system.actorOf(Props[TimerActor](new TimerActor(telegramApi)))
 
   def route: Route =
-    pathPrefix("api") {
-      get {
-        path("health") {
-          complete("ok")
-        }
-      } ~
-      post {
-        path("update") {
-          entity(as[TelegramUpdate]) { content =>
-            logger.debug(s"Got message from ${content.message.from.first_name}: ${content.message.text}")
+    handleRejections(TelegramRejectionHandler.apply) {
+      pathPrefix("api") {
+        get {
+          path("health") {
             complete("ok")
           }
-        }
+        } ~
+          post {
+            path("update") {
+              entity(as[TelegramUpdate]) { content =>
+                logger.debug(s"Got message from ${content.message.from.first_name}: ${content.message.text}")
+                telegramApi.sendMessage(ResponseMessage(content.message.chat.id, "WHAAAT? (responses still not implemented)"))
+                complete("ok")
+              }
+//              entity(as[String]) { content =>
+//                logger.warn(s"Unknown message from tg: $content")
+//                complete("ok")
+//              }
+            }
+          }
       }
     }
 

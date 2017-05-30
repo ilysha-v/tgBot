@@ -19,5 +19,7 @@ libraryDependencies ++= Seq(
   "org.typelevel" %% "cats" % "0.9.0",
   "com.github.pureconfig" %% "pureconfig" % "0.7.0",
   "ch.qos.logback" % "logback-classic" % "1.1.7",
-  "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0"
+  "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
+
+  "org.scalatest" %% "scalatest" % "3.0.1" % "test"
 )

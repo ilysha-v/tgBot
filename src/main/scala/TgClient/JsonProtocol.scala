@@ -23,10 +23,12 @@ trait TelegramJsonProtocol extends DefaultJsonProtocol {
   implicit def telegramResponse[T: JsonFormat] = jsonFormat2(TelegramApiResponse[T])
 
   implicit val setWebHookPayloadFormat = jsonFormat1(SetWebHookPayload)
-  implicit val senderFormat = jsonFormat3(Sender)
+  implicit val senderFormat = jsonFormat4(Sender)
   implicit val chatInfoFormat = jsonFormat3(ChatInfo)
   implicit val messageFormat = jsonFormat5(Message)
   implicit val telegramUpdateFormat = jsonFormat2(TelegramUpdate)
+
+  implicit val responseMessageFormat = jsonFormat2(ResponseMessage)
 }
 
 object TelegramJsonProtocol extends TelegramJsonProtocol
