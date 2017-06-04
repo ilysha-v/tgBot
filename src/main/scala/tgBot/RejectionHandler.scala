@@ -1,4 +1,4 @@
-package TgBot
+package tgBot
 
 import akka.http.scaladsl.server.{MalformedRequestContentRejection, RejectionHandler}
 import com.typesafe.scalalogging.StrictLogging

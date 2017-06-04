@@ -1,5 +1,7 @@
-import SubscriptionActor.Check
-import TgClient.TelegramApi
+package tgBot.actors
+
+import tgBot.actors.SubscriptionActor.Check
+import tgBot.tgClient.TelegramApi
 import akka.actor.Actor
 import com.typesafe.scalalogging.StrictLogging
 

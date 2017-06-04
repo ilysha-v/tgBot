@@ -1,4 +1,4 @@
-package TgBot
+package tgBot
 
 /**
   * Created by ilysha on 23/05/2017.

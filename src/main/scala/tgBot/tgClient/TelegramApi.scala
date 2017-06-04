@@ -1,6 +1,6 @@
-package TgClient
+package tgBot.tgClient
 
-import TgBot.Config
+import tgBot.Config
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport

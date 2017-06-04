@@ -1,4 +1,14 @@
-package TgClient
+package tgBot.tgClient
+
+case class ChatId(value: Int) extends AnyVal
+
+case class KeyboardButton(
+  text: String
+)
+
+case class KeyboardMarkup(
+  keyboard: Seq[Seq[KeyboardButton]]
+)
 
 case class TelegramApiResponse[T](
   ok: Boolean,
@@ -31,9 +41,9 @@ case class Message(
 )
 
 case class ChatInfo(
-  id: Int,
+  id: ChatId,
   first_name: String,
-  last_name: String
+  last_name: Option[String]
   //todo type
 )
 
@@ -43,6 +53,7 @@ case class TelegramUpdate(
 )
 
 case class ResponseMessage(
-  chat_id: Int,
-  text: String
+  chat_id: ChatId,
+  text: String,
+  reply_markup: Option[KeyboardMarkup] = None
 )

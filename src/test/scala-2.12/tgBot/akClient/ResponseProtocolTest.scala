@@ -1,4 +1,4 @@
-package AkClient
+package tgBot.akClient
 
 import org.scalatest.FreeSpec
 

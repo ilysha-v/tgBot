@@ -1,4 +1,5 @@
-import TgClient.TelegramApi
+import tgBot.actors.SubscriptionActor
+import tgBot.tgClient.TelegramApi
 import akka.actor.{Actor, Props}
 
 import scala.concurrent.ExecutionContext
