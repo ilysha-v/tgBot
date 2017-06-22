@@ -1,9 +1,9 @@
 package tgBot.actors
 
-import tgBot.akClient.AkClient
+import tgBot.akClient.{AkClient, Answer}
 import tgBot.tgClient.{TelegramApi, TelegramUpdate}
 import akka.actor.{Actor, Props}
-import tgBot.actors.AkActor.NewSession
+import tgBot.actors.AkActor.{NewSession, ProcessAnswer}
 import tgBot.storage.Storage
 class RouterActor(storage: Storage, akClient: AkClient, telegramApi: TelegramApi) extends Actor {
 
@@ -12,10 +12,10 @@ class RouterActor(storage: Storage, akClient: AkClient, telegramApi: TelegramApi
 
   override def receive: Receive = {
     case update: TelegramUpdate =>
-      val sessionId = storage.getSessionId(update.message.chat.id) match {
-        case Some(sessionId) => ???
+      val session = storage.getSession(update.message.chat.id) match {
+        case Some(s) =>
+          akActor ! ProcessAnswer(update.message.chat.id, s.id, Answer(update.message.text))
         case None => akActor ! NewSession(update.message.chat.id)
       }
-
   }
 }

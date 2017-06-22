@@ -6,6 +6,7 @@ import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.typesafe.scalalogging.StrictLogging
+import tgBot.storage.SessionInfo
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -18,8 +19,22 @@ class AkClient()(implicit system: ActorSystem) extends StrictLogging {
 
   val baseUrl = "http://api-ru1.akinator.com" // todo to config
 
-  def startSession(): Future[Response] = {
+  def startSession(): Future[InitialResponse] = {
     lazy val url = s"$baseUrl/ws/new_session?partner=1"
+
+    val request = HttpRequest(
+      uri = url,
+      method = HttpMethods.GET
+    )
+
+    Http()
+      .singleRequest(request)
+      .flatMap(x => Unmarshal(x.entity).to[InitialResponse])
+  }
+
+  def sendResponse(answerCode: Int, session: SessionInfo): Future[Response] = {
+    lazy val url =
+      s"$baseUrl/ws/answer?session={${session.id}}&signature=${session.signature}&step=${session.step}&answer=$answerCode"
 
     val request = HttpRequest(
       uri = url,

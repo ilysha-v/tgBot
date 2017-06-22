@@ -1,23 +1,25 @@
 package tgBot.storage
 
-import tgBot.akClient.SessionId
+import tgBot.akClient.{SessionId, Signature, Step}
 import tgBot.tgClient.ChatId
 
-trait Storage {
-  def getSessionId(chatId: ChatId): Option[SessionId]
+case class SessionInfo(id: SessionId, step: Step, signature: Signature)
 
-  def saveSessionId(chatId: ChatId, sessionId: SessionId)
+trait Storage {
+  def getSession(chatId: ChatId): Option[SessionInfo]
+
+  def saveSession(chatId: ChatId, sessionInfo: SessionInfo): Unit
 }
 
 // todo should use redis or something like for it
 class MemoryStorage extends Storage {
-  val storage = new scala.collection.concurrent.TrieMap[ChatId, SessionId]
+  val storage = new scala.collection.concurrent.TrieMap[ChatId, SessionInfo]
 
-  override def getSessionId(chatId: ChatId): Option[SessionId] = {
+  override def getSession(chatId: ChatId): Option[SessionInfo] = {
     storage.get(chatId)
   }
 
-  override def saveSessionId(chatId: ChatId, sessionId: SessionId): Unit = {
-    storage.put(chatId, sessionId)
+  override def saveSession(chatId: ChatId, sessionInfo: SessionInfo): Unit = {
+    storage.put(chatId, sessionInfo)
   }
 }

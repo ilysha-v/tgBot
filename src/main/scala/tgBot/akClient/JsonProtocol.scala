@@ -4,6 +4,7 @@ import spray.json.{DefaultJsonProtocol, JsArray, JsObject, JsString, JsValue, Ro
 
 abstract class JsonProtocol extends DefaultJsonProtocol {
   implicit val sessionIdFormat = jsonFormat1(SessionId)
+  implicit val signatureFormat = jsonFormat1(Signature)
 
   implicit val identificationFormat = new RootJsonFormat[Identification] {
     override def write(obj: Identification): JsValue = ???
@@ -14,7 +15,7 @@ abstract class JsonProtocol extends DefaultJsonProtocol {
           channel <- map.get("channel").map(_.convertTo[Int])
           session <- map.get("session").map(_.convertTo[String].toInt) // todo use format instead
           signature <- map.get("signature").map(_.convertTo[String].toInt)
-        } yield Identification(channel, SessionId(session), signature)
+        } yield Identification(channel, SessionId(session), Signature(signature))
           ).getOrElse(deserializationError("identification"))
       case _ => deserializationError("identification should be object")
     }
@@ -48,11 +49,11 @@ abstract class JsonProtocol extends DefaultJsonProtocol {
       case x => deserializationError("step information should be object")
     }
   }
-  implicit val parametersFormat = jsonFormat2(Parameters)
-  implicit val apiResponseFormat = new RootJsonFormat[Response] {
-    override def write(obj: Response): JsValue = ???
+  implicit val initialParametersFormat = jsonFormat2(InitialParameters)
+  implicit val apiInitialResponseFormat = new RootJsonFormat[InitialResponse] {
+    override def write(obj: InitialResponse): JsValue = ???
 
-    override def read(json: JsValue): Response = json match {
+    override def read(json: JsValue): InitialResponse = json match {
       case JsObject(map) =>
         val completionOpt = map.get("completion").map { stringValue =>
           stringValue.convertTo[String] match {
@@ -63,12 +64,15 @@ abstract class JsonProtocol extends DefaultJsonProtocol {
 
         (for {
           completion <- completionOpt
-          parameters <- map.get("parameters").map(parametersFormat.read)
-        } yield Response(completion, parameters)
+          parameters <- map.get("parameters").map(initialParametersFormat.read)
+        } yield InitialResponse(completion, parameters)
           ).getOrElse(deserializationError("response"))
       case _ => deserializationError("Response should be object")
     }
   }
+
+  implicit val parametersFormat = jsonFormat1(Parameters)
+  implicit val responseJsonProtocol = jsonFormat2(Response)
 }
 
 object AkJsonProtocol extends JsonProtocol
