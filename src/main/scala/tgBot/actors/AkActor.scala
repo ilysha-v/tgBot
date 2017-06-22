@@ -11,7 +11,7 @@ import scala.util.{Failure, Success}
 
 class AkActor(akClient: AkClient, storage: Storage) extends Actor with StrictLogging {
 
-  implicit val ex = context.system.dispatcher
+  implicit val ec = context.system.dispatcher
   val telegramActor = context.system.actorSelection("/user/" + TelegramActor.name) // todo find some good solution for it
 
   override def receive: Receive = {
@@ -24,15 +24,27 @@ class AkActor(akClient: AkClient, storage: Storage) extends Actor with StrictLog
           telegramActor ! SendQuestion(chatId, r.parameters.step_information.question, r.parameters.step_information.answers)
         case Failure(ex) => logger.error("Error happened when requesting new ak session", ex)
       }
-    case ProcessAnswer(chatId, sessionId, answer) =>
+    case ProcessAnswer(chatId, answer, sessionInfo) =>
+      AkActor.readUserResponse(answer) match { // todo fold or getOrElse
+        case Some(code) =>
+          akClient.sendResponse(code, sessionInfo).onComplete {
+            case Success(r) =>
+              storage.saveSession(chatId, sessionInfo.copy(step = sessionInfo.step.next))
+              telegramActor ! SendQuestion(chatId, r.parameters.question, r.parameters.answers)
+            case Failure(ex) =>
+              logger.error(s"Error happened when requesting next question from ak for session: $sessionInfo", ex)
+          }
+        case None => ??? // todo
+      }
+
   }
 }
 
 object AkActor {
   case class NewSession(chatId: ChatId)
-  case class ProcessAnswer(chatId: ChatId, sessionId: SessionId, answer: Answer)
+  case class ProcessAnswer(chatId: ChatId, answer: Answer, sessionInfo: SessionInfo)
 
-  def responseToCode(answer: Answer): Option[Int] = {
+  def readUserResponse(answer: Answer): Option[Int] = {
     // todo stupid but fast temporary solution
     answer.answer match {
       case "Да" => Some(0)

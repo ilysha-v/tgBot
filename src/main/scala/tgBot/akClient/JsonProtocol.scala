@@ -44,7 +44,7 @@ abstract class JsonProtocol extends DefaultJsonProtocol {
             case x @ JsArray(_) => x.convertTo[Seq[Answer]]
             case x => deserializationError("answers should be an array")
           }
-        } yield StepInformation(question, step, progress, questionId, answers)
+        } yield StepInformation(question, Step(step), progress, questionId, answers)
           ).getOrElse(deserializationError("response"))
       case x => deserializationError("step information should be object")
     }
@@ -71,7 +71,15 @@ abstract class JsonProtocol extends DefaultJsonProtocol {
     }
   }
 
-  implicit val parametersFormat = jsonFormat1(Parameters)
+  implicit val akBooleanFormat = new RootJsonFormat[AkBoolean] {
+    override def read(json: JsValue): AkBoolean = json match {
+      case JsString(strValue) =>
+        AkBoolean(strValue == "OK")
+      case _ => deserializationError("Unable to read ak boolean (wrapper for completion string values)")
+    }
+
+    override def write(obj: AkBoolean): JsValue = ???
+  }
   implicit val responseJsonProtocol = jsonFormat2(Response)
 }
 

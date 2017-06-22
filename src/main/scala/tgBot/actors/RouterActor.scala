@@ -12,9 +12,9 @@ class RouterActor(storage: Storage, akClient: AkClient, telegramApi: TelegramApi
 
   override def receive: Receive = {
     case update: TelegramUpdate =>
-      val session = storage.getSession(update.message.chat.id) match {
+      storage.getSession(update.message.chat.id) match {
         case Some(s) =>
-          akActor ! ProcessAnswer(update.message.chat.id, s.id, Answer(update.message.text))
+          akActor ! ProcessAnswer(update.message.chat.id, Answer(update.message.text), s)
         case None => akActor ! NewSession(update.message.chat.id)
       }
   }
