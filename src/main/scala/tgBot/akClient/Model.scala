@@ -25,4 +25,17 @@ case class InitialParameters(identification: Identification, step_information: S
 case class AkBoolean(value: Boolean)
 case class Response(completion: AkBoolean, parameters: StepInformation)
 
-case class Character(id: Int)
+case class AkCharacter(
+  id: Int,
+  name: String,
+  id_base: Int,
+  proba: Double,
+  description: String,
+  ranking: Int,
+  pseudo: Option[String],
+  absolute_picture_path: String
+)
+
+case class Element(element: AkCharacter)
+case class CharactersParameters(elements: Seq[Element])
+case class CharactersResponse(completion: AkBoolean, parameters: CharactersParameters)

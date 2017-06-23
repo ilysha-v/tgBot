@@ -29,8 +29,22 @@ class AkActor(akClient: AkClient, storage: Storage) extends Actor with StrictLog
         case Some(code) =>
           akClient.sendResponse(code, sessionInfo).onComplete {
             case Success(r) =>
-              storage.saveSession(chatId, sessionInfo.copy(step = sessionInfo.step.next))
-              telegramActor ! SendQuestion(chatId, r.parameters.question, r.parameters.answers)
+              val newSession = sessionInfo.copy(step = sessionInfo.step.next)
+              storage.saveSession(chatId, newSession)
+              if (r.parameters.progression > 97.0) { // todo 97.0 to config
+                akClient.getPossibleCharacters(newSession).onComplete {
+                  case Success(characters) =>
+                    // todo ak can return 0 characters. Need support for it
+                    logger.debug(s"Got possible characters: ${characters.parameters.elements}")
+                    storage.removeSession(chatId)
+                    telegramActor ! SendPossibleCharacter(chatId, characters.parameters.elements.head.element)
+                  case Failure(ex) => logger.error(s"Unable to load characters list from ak for session $newSession", ex)
+                }
+              }
+              else {
+                logger.info(s"Got next question for session $newSession. Progress: ${r.parameters.progression}")
+                telegramActor ! SendQuestion(chatId, r.parameters.question, r.parameters.answers)
+              }
             case Failure(ex) =>
               logger.error(s"Error happened when requesting next question from ak for session: $sessionInfo", ex)
           }

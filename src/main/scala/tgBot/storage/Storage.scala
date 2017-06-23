@@ -9,6 +9,8 @@ trait Storage {
   def getSession(chatId: ChatId): Option[SessionInfo]
 
   def saveSession(chatId: ChatId, sessionInfo: SessionInfo): Unit
+
+  def removeSession(chatId: ChatId): Unit
 }
 
 // todo should use redis or something like for it
@@ -21,5 +23,9 @@ class MemoryStorage extends Storage {
 
   override def saveSession(chatId: ChatId, sessionInfo: SessionInfo): Unit = {
     storage.put(chatId, sessionInfo)
+  }
+
+  override def removeSession(chatId: ChatId): Unit = {
+    storage.remove(chatId)
   }
 }
