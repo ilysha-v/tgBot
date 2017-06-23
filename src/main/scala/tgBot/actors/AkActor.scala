@@ -48,7 +48,8 @@ class AkActor(akClient: AkClient, storage: Storage) extends Actor with StrictLog
             case Failure(ex) =>
               logger.error(s"Error happened when requesting next question from ak for session: $sessionInfo", ex)
           }
-        case None => ??? // todo
+        case None =>
+          logger.error(s"Unable to get code from user response: $answer")
       }
 
   }

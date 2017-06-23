@@ -23,6 +23,7 @@ class TelegramApi(config: Config)(implicit system: ActorSystem) extends StrictLo
 
   def getWebHookInfo(): Future[WebHookInfo] = {
     val request = HttpRequest(uri = getUrl("getWebhookInfo"))
+    logger.debug(s"Sending tg request: $request")
     Http()
       .singleRequest(request)
       .flatMap(x => Unmarshal(x.entity).to[TelegramApiResponse[WebHookInfo]])
@@ -49,7 +50,7 @@ class TelegramApi(config: Config)(implicit system: ActorSystem) extends StrictLo
       .map(x => x.result)
   }
 
-  def sendMessage(message: ResponseMessage): Future[Boolean] = {
+  def sendMessage[T <: KeyboardPayload](message: ResponseMessage): Future[Boolean] = {
     val payload = HttpEntity.Strict(
       contentType = ContentTypes.`application/json`,
       data = ByteString(message.toJson.compactPrint)

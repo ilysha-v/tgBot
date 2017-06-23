@@ -40,7 +40,16 @@ trait TelegramJsonProtocol extends DefaultJsonProtocol {
 
   implicit val keyboardButtonFormat = jsonFormat1(KeyboardButton)
   implicit val keyboardMarkupFormat = jsonFormat1(KeyboardMarkup)
+  implicit val keyboardRemoveFormat = jsonFormat1(KeyboardRemove)
 
+  implicit val keyboardPayloadFormat = new RootJsonFormat[KeyboardPayload] {
+    override def read(json: JsValue): KeyboardPayload = ???
+
+    override def write(obj: KeyboardPayload): JsValue = obj match {
+      case x @ KeyboardMarkup(_) => keyboardMarkupFormat.write(x)
+      case x @ KeyboardRemove(_) => keyboardRemoveFormat.write(x)
+    }
+  }
   implicit val responseMessageFormat = jsonFormat3(ResponseMessage)
 }
 

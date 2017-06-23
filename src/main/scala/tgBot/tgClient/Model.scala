@@ -6,9 +6,16 @@ case class KeyboardButton(
   text: String
 )
 
-case class KeyboardMarkup(
+sealed trait KeyboardPayload
+
+// todo удаление клавиатуры
+case class KeyboardMarkup (
   keyboard: Seq[Seq[KeyboardButton]]
-)
+) extends KeyboardPayload
+
+case class KeyboardRemove(
+  remove_keyboard: Boolean
+) extends KeyboardPayload
 
 case class TelegramApiResponse[T](
   ok: Boolean,
@@ -55,5 +62,5 @@ case class TelegramUpdate(
 case class ResponseMessage(
   chat_id: ChatId,
   text: String,
-  reply_markup: Option[KeyboardMarkup] = None
+  reply_markup: Option[KeyboardPayload] = None
 )

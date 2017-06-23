@@ -1,8 +1,8 @@
 package tgBot.actors
 
 import akka.actor.Actor
-import tgBot.akClient.{AkCharacter, AkClient, Answer}
-import tgBot.tgClient.{ChatId, KeyboardButton, KeyboardMarkup, ResponseMessage, TelegramApi}
+import tgBot.akClient.{AkCharacter, Answer}
+import tgBot.tgClient.{ChatId, KeyboardButton, KeyboardMarkup, KeyboardRemove, ResponseMessage, TelegramApi}
 
 class TelegramActor(api: TelegramApi) extends Actor {
   override def receive: Receive = {
@@ -12,15 +12,15 @@ class TelegramActor(api: TelegramApi) extends Actor {
       // todo make good text and remove character class usage - in comes from another library
       // todo remove keyboard also
       val text = s"Ваш персонаж - ${character.name}, ${character.description}"
-      api.sendMessage(ResponseMessage(chatId, text))
+      api.sendMessage(ResponseMessage(chatId, text, Some(KeyboardRemove(true))))
   }
 }
 
 case object TelegramActor {
   def name = "telegram_actor"
 
-  def createKeyboard(andswers: Seq[Answer]): KeyboardMarkup = {
-    KeyboardMarkup(andswers.map(x => List(KeyboardButton(text = x.answer))))
+  def createKeyboard(answers: Seq[Answer]): KeyboardMarkup = {
+    KeyboardMarkup(answers.map(x => List(KeyboardButton(text = x.answer))))
   }
 }
 
