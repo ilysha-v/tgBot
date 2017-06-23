@@ -8,8 +8,6 @@ import com.typesafe.scalalogging.StrictLogging
 class RouterActor(akClient: AkClient, telegramApi: TelegramApi) extends Actor with StrictLogging {
   val actorsStorage = new scala.collection.concurrent.TrieMap[ChatId, ActorRef]
 
-  // todo supervising - без этого не будет нормально работать
-
   override def receive: Receive = {
     case update: TelegramUpdate =>
       actorsStorage.getOrElse(update.message.chat.id, {

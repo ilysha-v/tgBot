@@ -26,7 +26,7 @@ class BotActor(
   }
 
   def starting: Receive = {
-    case x: String if x == "start" =>
+    case x: String if x.toLowerCase == "start" =>
       akClient.startSession().onComplete {
         case Success(r) =>
           sessionInfo = SessionInfo(r.parameters.identification.session, r.parameters.identification.signature, r.parameters.step_information.step)
@@ -58,6 +58,7 @@ class BotActor(
                     val character = characters.parameters.elements.head
                     val text = s"Загаданный персонаж - ${character.element.name}, ${character.element.description}"
                     telegramApi.sendMessage(ResponseMessage(chatId, text, Some(KeyboardRemove(true))))
+                    context.stop(self)
                   case Failure(ex) => logger.error(s"Unable to load characters list from ak for session $sessionInfo", ex)
                 }
               }
