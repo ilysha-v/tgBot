@@ -6,7 +6,7 @@ import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.typesafe.scalalogging.StrictLogging
-import tgBot.storage.SessionInfo
+import tgBot.SessionInfo
 
 import scala.concurrent.{ExecutionContext, Future}
 

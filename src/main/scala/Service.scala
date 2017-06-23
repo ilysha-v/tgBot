@@ -8,7 +8,6 @@ import pureconfig._
 
 object Service {
   def main(args: Array[String]): Unit = {
-
     loadConfig[Config] match {
       case Right(config) =>
         implicit val system = ActorSystem()

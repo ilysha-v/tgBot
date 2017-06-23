@@ -1,21 +1,25 @@
 package tgBot.actors
 
-import tgBot.akClient.{AkClient, Answer}
-import tgBot.tgClient.{TelegramApi, TelegramUpdate}
-import akka.actor.{Actor, Props}
-import tgBot.actors.AkActor.{NewSession, ProcessAnswer}
-import tgBot.storage.Storage
-class RouterActor(storage: Storage, akClient: AkClient, telegramApi: TelegramApi) extends Actor {
+import tgBot.akClient.AkClient
+import tgBot.tgClient.{ChatId, TelegramApi, TelegramUpdate}
+import akka.actor.{Actor, ActorRef, Props, Terminated}
+import com.typesafe.scalalogging.StrictLogging
 
-  val akActor = context.system.actorOf(Props[AkActor](new AkActor(akClient, storage)))
-  val telegramActor = context.system.actorOf(Props[TelegramActor](new TelegramActor(telegramApi)), TelegramActor.name)
+class RouterActor(akClient: AkClient, telegramApi: TelegramApi) extends Actor with StrictLogging {
+  val actorsStorage = new scala.collection.concurrent.TrieMap[ChatId, ActorRef]
+
+  // todo supervising - без этого не будет нормально работать
 
   override def receive: Receive = {
     case update: TelegramUpdate =>
-      storage.getSession(update.message.chat.id) match {
-        case Some(s) =>
-          akActor ! ProcessAnswer(update.message.chat.id, Answer(update.message.text), s)
-        case None => akActor ! NewSession(update.message.chat.id)
-      }
+      actorsStorage.getOrElse(update.message.chat.id, {
+        val actorRef = context.system.actorOf(Props[BotActor](new BotActor(akClient, telegramApi, update.message.chat.id)))
+        actorsStorage.put(update.message.chat.id, actorRef)
+        context.watch(actorRef)
+        actorRef
+      }) ! update.message.text
+    case Terminated(terminated) =>
+      actorsStorage.find(x => x._2 == terminated).map(x => actorsStorage.remove(x._1)) // todo do not use tuples
   }
 }
+

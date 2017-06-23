@@ -6,7 +6,6 @@ import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server.{HttpApp, Route}
 import com.typesafe.scalalogging.StrictLogging
-import tgBot.storage.MemoryStorage
 
 class WebHookService(
   telegramApi: TelegramApi,
@@ -16,10 +15,8 @@ class WebHookService(
   import SprayJsonSupport._
   import TelegramJsonProtocol._
 
-  val storage = new MemoryStorage()
-
   system.actorOf(Props[TimerActor](new TimerActor(telegramApi)))
-  val routerRef = system.actorOf(Props[RouterActor](new RouterActor(storage, akClient, telegramApi)))
+  val routerRef = system.actorOf(Props[RouterActor](new RouterActor(akClient, telegramApi)))
   implicit val ex = system.dispatcher
 
   def route: Route =
@@ -35,13 +32,8 @@ class WebHookService(
               entity(as[TelegramUpdate]) { content =>
                 logger.debug(s"Got message from ${content.message.from.first_name}: ${content.message.text}")
                 routerRef ! content
-//                telegramApi.sendMessage(ResponseMessage(content.message.chat.id, "WHAAAT? (responses still not implemented)"))
                 complete("ok")
               }
-//              entity(as[String]) { content =>
-//                logger.warn(s"Unknown message from tg: $content")
-//                complete("ok")
-//              }
             }
           }
       }

@@ -9,6 +9,7 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import akka.util.ByteString
 import com.typesafe.scalalogging.StrictLogging
+import tgBot.akClient.Answer
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -50,7 +51,7 @@ class TelegramApi(config: Config)(implicit system: ActorSystem) extends StrictLo
       .map(x => x.result)
   }
 
-  def sendMessage[T <: KeyboardPayload](message: ResponseMessage): Future[Boolean] = {
+  def sendMessage(message: ResponseMessage): Future[Boolean] = {
     val payload = HttpEntity.Strict(
       contentType = ContentTypes.`application/json`,
       data = ByteString(message.toJson.compactPrint)
@@ -66,5 +67,15 @@ class TelegramApi(config: Config)(implicit system: ActorSystem) extends StrictLo
       .singleRequest(request)
       .flatMap(x => Unmarshal(x.entity).to[TelegramApiResponse[Boolean]])
       .map(x => x.result)
+  }
+
+  def sendMessage(chatId: ChatId, text: String): Future[Boolean] = {
+    sendMessage(ResponseMessage(chatId, text))
+  }
+}
+
+object TelegramApi {
+  def createKeyboard(answers: Seq[Answer]): KeyboardMarkup = {
+    KeyboardMarkup(answers.map(x => List(KeyboardButton(text = x.answer))))
   }
 }
