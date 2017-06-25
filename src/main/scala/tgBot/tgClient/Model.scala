@@ -35,7 +35,7 @@ case class Sender(
   first_name: String,
   last_name: Option[String],
   username: Option[String],
-  language_code: String
+  language_code: Option[String]
 )
 
 case class Message(
@@ -63,4 +63,9 @@ case class ResponseMessage(
   chat_id: ChatId,
   text: String,
   reply_markup: Option[KeyboardPayload] = None
+)
+
+case class ImageMessage(
+  chat_id: ChatId,
+  document: String
 )

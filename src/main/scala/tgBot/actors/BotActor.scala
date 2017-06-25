@@ -4,7 +4,7 @@ import akka.actor.Actor
 import com.typesafe.scalalogging.StrictLogging
 import tgBot.{SessionInfo, Texts}
 import tgBot.akClient.{AkClient, Answer, SessionId, Signature, Step}
-import tgBot.tgClient.{ChatId, KeyboardRemove, ResponseMessage, TelegramApi}
+import tgBot.tgClient.{ChatId, KeyboardButton, KeyboardMarkup, KeyboardRemove, ResponseMessage, TelegramApi}
 
 import scala.util.{Failure, Success}
 
@@ -20,13 +20,16 @@ class BotActor(
   var sessionInfo = SessionInfo(SessionId(0), Signature(0), Step(0))
 
   override def receive: Receive = {
+    case x: String if x.toLowerCase.contains("start") =>
+      context.become(starting)
+      self ! x
     case _ =>
-      telegramApi.sendMessage(ResponseMessage(chatId, Texts.startMessage))
+      sendStartButton(Texts.startMessage)
       context.become(starting)
   }
 
   def starting: Receive = {
-    case x: String if x.toLowerCase == "start" =>
+    case x: String if x.toLowerCase.contains("start") =>
       akClient.startSession().onComplete {
         case Success(r) =>
           sessionInfo = SessionInfo(r.parameters.identification.session, r.parameters.identification.signature, r.parameters.step_information.step)
@@ -57,8 +60,15 @@ class BotActor(
                     logger.debug(s"Got possible characters: ${characters.parameters.elements}")
                     val character = characters.parameters.elements.head
                     val text = s"Загаданный персонаж - ${character.element.name}, ${character.element.description}"
-                    telegramApi.sendMessage(ResponseMessage(chatId, text, Some(KeyboardRemove(true))))
-                    context.stop(self)
+                    telegramApi.sendMessage(ResponseMessage(chatId, text, Some(KeyboardRemove(true)))).andThen {
+                      case Success(_) =>
+                        telegramApi.sendPicture(chatId, character.element.absolute_picture_path)
+                    }.andThen {
+                      case _ => sendStartButton(Texts.restartMessage)
+                    }.andThen {
+                      case _ =>
+                        context.stop(self)
+                    }
                   case Failure(ex) => logger.error(s"Unable to load characters list from ak for session $sessionInfo", ex)
                 }
               }
@@ -71,12 +81,21 @@ class BotActor(
               }
             case Failure(ex) =>
               logger.error("Error when sending response to ak api", ex)
-              telegramApi.sendMessage(chatId, Texts.errorMessage)
-              context.stop(self)
+              telegramApi.sendMessage(chatId, Texts.errorMessage).andThen {
+                case _ => sendStartButton(Texts.restartMessage)
+              }.andThen {
+                case _ => context.stop(self)
+              }
+
           }
         case None =>
           telegramApi.sendMessage(chatId, Texts.unableToParseResponse)
       }
+  }
+
+  private def sendStartButton(text: String) = {
+    val startKeyboardMarkup = KeyboardMarkup(Seq(Seq(KeyboardButton("/start"))))
+    telegramApi.sendMessage(ResponseMessage(chatId, text, Some(startKeyboardMarkup)))
   }
 }
 

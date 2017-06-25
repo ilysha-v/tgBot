@@ -24,7 +24,6 @@ class TelegramApi(config: Config)(implicit system: ActorSystem) extends StrictLo
 
   def getWebHookInfo(): Future[WebHookInfo] = {
     val request = HttpRequest(uri = getUrl("getWebhookInfo"))
-    logger.debug(s"Sending tg request: $request")
     Http()
       .singleRequest(request)
       .flatMap(x => Unmarshal(x.entity).to[TelegramApiResponse[WebHookInfo]])
@@ -51,7 +50,7 @@ class TelegramApi(config: Config)(implicit system: ActorSystem) extends StrictLo
       .map(x => x.result)
   }
 
-  def sendMessage(message: ResponseMessage): Future[Boolean] = {
+  def sendMessage(message: ResponseMessage): Future[Unit] = {
     val payload = HttpEntity.Strict(
       contentType = ContentTypes.`application/json`,
       data = ByteString(message.toJson.compactPrint)
@@ -65,12 +64,23 @@ class TelegramApi(config: Config)(implicit system: ActorSystem) extends StrictLo
 
     Http()
       .singleRequest(request)
-      .flatMap(x => Unmarshal(x.entity).to[TelegramApiResponse[Boolean]])
-      .map(x => x.result)
+      .map(_ => ())
   }
 
-  def sendMessage(chatId: ChatId, text: String): Future[Boolean] = {
+  def sendMessage(chatId: ChatId, text: String): Future[Unit] = {
     sendMessage(ResponseMessage(chatId, text))
+  }
+
+  def sendPicture(chatId: ChatId, url: String): Future[Unit] = {
+
+    val request = HttpRequest(
+      uri = s"${getUrl("sendPhoto")}?chat_id=${chatId.value}&photo=$url",
+      method = HttpMethods.POST
+    )
+
+    Http()
+      .singleRequest(request)
+      .map(x => ())
   }
 }
 

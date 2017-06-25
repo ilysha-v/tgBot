@@ -51,6 +51,7 @@ trait TelegramJsonProtocol extends DefaultJsonProtocol {
     }
   }
   implicit val responseMessageFormat = jsonFormat3(ResponseMessage)
+  implicit val imageMessageFormat = jsonFormat2(ImageMessage)
 }
 
 object TelegramJsonProtocol extends TelegramJsonProtocol
