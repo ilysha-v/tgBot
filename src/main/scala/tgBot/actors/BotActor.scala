@@ -3,7 +3,7 @@ package tgBot.actors
 import akka.actor.Actor
 import com.typesafe.scalalogging.StrictLogging
 import tgBot.{SessionInfo, Texts}
-import tgBot.akClient.{AkClient, Answer, SessionId, Signature, Step}
+import tgBot.akClient.{AkClient, Answer}
 import tgBot.tgClient.{ChatId, KeyboardButton, KeyboardMarkup, KeyboardRemove, ResponseMessage, TelegramApi}
 
 import scala.util.{Failure, Success}
@@ -15,9 +15,6 @@ class BotActor(
 ) extends Actor with StrictLogging {
 
   implicit val ec = context.system.dispatcher
-
-  // todo remove var usage
-  var sessionInfo = SessionInfo(SessionId(0), Signature(0), Step(0))
 
   override def receive: Receive = {
     case x: String if x.toLowerCase.contains("start") =>
@@ -32,13 +29,13 @@ class BotActor(
     case x: String if x.toLowerCase.contains("start") =>
       akClient.startSession().onComplete {
         case Success(r) =>
-          sessionInfo = SessionInfo(r.parameters.identification.session, r.parameters.identification.signature, r.parameters.step_information.step)
+          val sessionInfo = SessionInfo(r.parameters.identification.session, r.parameters.identification.signature, r.parameters.step_information.step)
           telegramApi.sendMessage(
             ResponseMessage(
               chatId,
               r.parameters.step_information.question,
               Some(TelegramApi.createKeyboard(r.parameters.step_information.answers))))
-              context.become(answering)
+          context.become(answering(sessionInfo))
         case Failure(ex) =>
           logger.error("Error when starting new ak session", ex)
           telegramApi.sendMessage(chatId, Texts.errorMessage)
@@ -46,15 +43,15 @@ class BotActor(
       }
   }
 
-  def answering: Receive = {
+  def answering(sessionInfo: SessionInfo): Receive = {
     case x: String =>
       BotActor.readUserResponse(Answer(x)) match {
         case Some(code) =>
+          val nextStepSession = sessionInfo.copy(step = sessionInfo.step.next)
           akClient.sendResponse(code, sessionInfo).onComplete {
             case Success(r) =>
-              sessionInfo = sessionInfo.copy(step = r.parameters.step)
               if (r.parameters.progression > 97.0) { // todo to config
-                akClient.getPossibleCharacters(sessionInfo).onComplete {
+                akClient.getPossibleCharacters(nextStepSession).onComplete {
                   case Success(characters) =>
                     // todo ak can return 0 characters. Need support for it
                     logger.debug(s"Got possible characters: ${characters.parameters.elements}")
@@ -78,15 +75,14 @@ class BotActor(
                     chatId,
                     r.parameters.question,
                     Some(TelegramApi.createKeyboard(r.parameters.answers))))
+                context.become(answering(nextStepSession))
               }
             case Failure(ex) =>
               logger.error("Error when sending response to ak api", ex)
-              telegramApi.sendMessage(chatId, Texts.errorMessage).andThen {
-                case _ => sendStartButton(Texts.restartMessage)
-              }.andThen {
-                case _ => context.stop(self)
-              }
-
+              for {
+                _ <- telegramApi.sendMessage(chatId, Texts.errorMessage)
+                _ <- sendStartButton(Texts.restartMessage)
+              } yield context.stop(self)
           }
         case None =>
           telegramApi.sendMessage(chatId, Texts.unableToParseResponse)
