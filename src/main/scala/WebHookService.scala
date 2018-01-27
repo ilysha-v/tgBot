@@ -19,7 +19,7 @@ class WebHookService(
   val routerRef = system.actorOf(Props[RouterActor](new RouterActor(akClient, telegramApi)))
   implicit val ex = system.dispatcher
 
-  def route: Route =
+  override protected def routes: Route =
     handleRejections(TelegramRejectionHandler.apply) {
       pathPrefix("api") {
         get {

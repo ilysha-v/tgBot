@@ -42,16 +42,14 @@ case class Message(
   message_id: Int,
   from: Sender,
   chat: ChatInfo,
-  date: Int, // todo timestamp
-  text: String
-  // todo entities
+  date: Int,
+  text: Option[String]
 )
 
 case class ChatInfo(
   id: ChatId,
   first_name: String,
   last_name: Option[String]
-  //todo type
 )
 
 case class TelegramUpdate(

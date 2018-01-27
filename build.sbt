@@ -2,14 +2,15 @@ name := "tgBot"
 
 version := "0.0.1"
 
-scalaVersion := "2.12.2"
+scalaVersion := "2.12.4"
 
-val akkaVersion = "2.5.1"
-val akkaHttpVersion = "10.0.6"
+val akkaVersion = "2.5.6"
+val akkaHttpVersion = "10.0.11"
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % akkaVersion,
   "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+  "com.typesafe.akka" %% "akka-typed" % akkaVersion,
   "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
 
   "com.typesafe.akka" %% "akka-http-core" % akkaHttpVersion,
